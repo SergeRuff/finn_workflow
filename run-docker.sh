@@ -77,7 +77,7 @@ SCRIPTPATH=$(dirname "$SCRIPT")
 : ${LOCALHOST_URL="localhost"}
 : ${PYNQ_USERNAME="xilinx"}
 : ${PYNQ_PASSWORD="xilinx"}
-: ${PYNQ_BOARD="Pynq-Z1"}
+: ${PYNQ_BOARD="Pynq-Z2"}
 : ${PYNQ_TARGET_DIR="/home/xilinx/$DOCKER_INST_NAME"}
 : ${NUM_DEFAULT_WORKERS=4}
 : ${FINN_SSH_KEY_DIR="$SCRIPTPATH/ssh_keys"}
@@ -147,6 +147,9 @@ elif [ -z "$1" ]; then
    gecho "Running container only"
    DOCKER_CMD="bash"
    DOCKER_INTERACTIVE="-it"
+elif [ "$1" = "detached" ]; then
+   gecho "Running detached container only"
+   DOCKER_INTERACTIVE="-d"
 else
   gecho "Running container with passed arguments"
   DOCKER_CMD="$@"
@@ -207,7 +210,7 @@ fi
 # Launch container with current directory mounted
 # important to pass the --init flag here for correct Vivado operation, see:
 # https://stackoverflow.com/questions/55733058/vivado-synthesis-hangs-in-docker-container-spawned-by-jenkins
-DOCKER_BASE="docker run -t --rm $DOCKER_INTERACTIVE --tty --init --hostname $DOCKER_INST_NAME "
+DOCKER_BASE="docker run -t --rm $DOCKER_INTERACTIVE --tty --init --hostname $DOCKER_INST_NAME --name $DOCKER_INST_NAME "
 DOCKER_EXEC="-e SHELL=/bin/bash "
 DOCKER_EXEC+="-w $SCRIPTPATH "
 DOCKER_EXEC+="-v $SCRIPTPATH:$SCRIPTPATH "
@@ -223,6 +226,9 @@ DOCKER_EXEC+="-e PYNQ_PASSWORD=$PYNQ_PASSWORD "
 DOCKER_EXEC+="-e PYNQ_TARGET_DIR=$PYNQ_TARGET_DIR "
 DOCKER_EXEC+="-e OHMYXILINX=$OHMYXILINX "
 DOCKER_EXEC+="-e NUM_DEFAULT_WORKERS=$NUM_DEFAULT_WORKERS "
+##################################################################
+DOCKER_EXEC+="-e HOME=/tmp/home_dir "
+##################################################################
 # Workaround for FlexLM issue, see:
 # https://community.flexera.com/t5/InstallAnywhere-Forum/Issues-when-running-Xilinx-tools-or-Other-vendor-tools-in-docker/m-p/245820#M10647
 DOCKER_EXEC+="-e LD_PRELOAD=/lib/x86_64-linux-gnu/libudev.so.1 "
@@ -233,6 +239,9 @@ if [ "$FINN_DOCKER_RUN_AS_ROOT" = "0" ] && [ -z "$FINN_SINGULARITY" ];then
   DOCKER_EXEC+="-v /etc/sudoers.d:/etc/sudoers.d:ro "
   DOCKER_EXEC+="-v $FINN_SSH_KEY_DIR:$HOME/.ssh "
   DOCKER_EXEC+="--user $DOCKER_UID:$DOCKER_GID "
+##############################################################################
+  DOCKER_EXEC+="-v $SCRIPTPATH/.finn_cached:/tmp/home_dir "
+#############################################################################
 else
   DOCKER_EXEC+="-v $FINN_SSH_KEY_DIR:/root/.ssh "
 fi
