@@ -75,11 +75,6 @@ else
   exit -1
 fi
 
-###########################################################
-# Fix pytest compatibility (anyio must be <4 for pytest 6)
-pip install --user "anyio<4"
-###########################################################
-
 if [ -f "$VITIS_PATH/settings64.sh" ];then
   # source Vitis env.vars
   export XILINX_VITIS=$VITIS_PATH

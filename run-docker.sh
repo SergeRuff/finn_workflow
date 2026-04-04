@@ -87,7 +87,7 @@ SCRIPTPATH=$(dirname "$SCRIPT")
 : ${ALVEO_TARGET_DIR="/tmp"}
 : ${PLATFORM_REPO_PATHS="/opt/xilinx/platforms"}
 : ${XRT_DEB_VERSION="xrt_202220.2.14.354_22.04-amd64-xrt"}
-: ${FINN_HOST_BUILD_DIR="/tmp/$DOCKER_INST_NAME"}
+: ${FINN_HOST_BUILD_DIR="$SCRIPTPATH/.build"}
 : ${FINN_DOCKER_TAG="xilinx/finn:$(git describe --always --tags --dirty).$XRT_DEB_VERSION"}
 : ${FINN_DOCKER_PREBUILT="0"}
 : ${FINN_DOCKER_RUN_AS_ROOT="0"}
@@ -102,6 +102,7 @@ SCRIPTPATH=$(dirname "$SCRIPT")
 : ${FINN_SINGULARITY=""}
 : ${FINN_SKIP_XRT_DOWNLOAD=""}
 : ${FINN_XRT_PATH=""}
+: ${CACHED_HOME_DIR="$SCRIPTPATH/.home_cached"}
 
 DOCKER_INTERACTIVE=""
 
@@ -171,6 +172,7 @@ VIVADO_IP_CACHE=$FINN_HOST_BUILD_DIR/vivado_ip_cache
 # ensure build dir exists locally
 mkdir -p $FINN_HOST_BUILD_DIR
 mkdir -p $FINN_SSH_KEY_DIR
+mkdir -p $CACHED_HOME_DIR
 
 gecho "Docker container is named $DOCKER_INST_NAME"
 gecho "Docker tag is named $FINN_DOCKER_TAG"
@@ -183,7 +185,7 @@ gecho "Using default PYNQ board $PYNQ_BOARD"
 
 # Ensure git-based deps are checked out at correct commit
 if [ "$FINN_SKIP_DEP_REPOS" = "0" ]; then
-  ./fetch-repos.sh
+  $SCRIPTPATH/fetch-repos.sh
 fi
 
 # If xrt path given, copy .deb file to this repo
@@ -239,9 +241,7 @@ if [ "$FINN_DOCKER_RUN_AS_ROOT" = "0" ] && [ -z "$FINN_SINGULARITY" ];then
   DOCKER_EXEC+="-v /etc/sudoers.d:/etc/sudoers.d:ro "
   DOCKER_EXEC+="-v $FINN_SSH_KEY_DIR:$HOME/.ssh "
   DOCKER_EXEC+="--user $DOCKER_UID:$DOCKER_GID "
-##############################################################################
-  DOCKER_EXEC+="-v $SCRIPTPATH/.finn_cached:/tmp/home_dir "
-#############################################################################
+  DOCKER_EXEC+="-v $CACHED_HOME_DIR:/tmp/home_dir "
 else
   DOCKER_EXEC+="-v $FINN_SSH_KEY_DIR:/root/.ssh "
 fi
