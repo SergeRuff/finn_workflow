@@ -1,0 +1,3 @@
+[submodule "finn-examples"]
+	path = finn-examples
+	url = https://github.com/Xilinx/finn-examples.git
